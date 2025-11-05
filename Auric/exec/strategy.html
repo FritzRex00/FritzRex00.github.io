@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Auric — Strategy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/main.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <style>
+    /* === AURIC BASE THEME === */
+    body {
+      background: #e8ddbd;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #222;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* === HEADER === */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: #fff3cd;
+      color: #222;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .header strong {
+      font-size: 1.3em;
+      letter-spacing: 0.5px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav button.link {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 10px;
+      transition: color 0.2s ease;
+    }
+
+    .nav button.link:hover {
+      color: #555;
+      text-decoration: underline;
+    }
+
+    /* === CARD & GRID === */
+    .container.grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 40px;
+    }
+
+    .card {
+      background: #f9f6e8;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 24px 28px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .card h3, .card h4 {
+      margin-top: 0;
+      color: #222;
+    }
+
+    .small {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    /* === BUTTONS === */
+    .btn {
+      background: linear-gradient(135deg, #ffda47, #ffb347);
+      border: none;
+      color: #222;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
+    /* === DARK MODE === */
+    body.dark {
+      background: #0d1329 !important;
+      color: #f5f7ff !important;
+    }
+
+    body.dark .header {
+      background: #1c2952 !important;
+      color: #f9f9ff !important;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.4);
+    }
+
+    body.dark .card {
+      background: #111a33 !important;
+      color: #f4f6ff !important;
+      box-shadow: 0 0 16px rgba(255,255,255,0.05) !important;
+    }
+
+    body.dark .card h3,
+    body.dark .card h4 {
+      color: #ffda47 !important;
+    }
+
+    body.dark .btn {
+      background: linear-gradient(135deg, #ffda47, #ffc857);
+      color: #111;
+    }
+
+    :root { --transition-dur: 360ms; }
+  </style>
+</head>
+
+<body>
+  <script>
+    const cur = requireAuth(['exec']);
+  </script>
+
+  <div class="header">
+    <div><strong>Auric</strong> — Strategy</div>
+    <div class="nav">
+    </div>
+  </div>
+
+  <div class="container grid">
+    <div>
+      <div class="card">
+        <h3>Strategy Planner</h3>
+        <p class="small">Use KPIs and insights to plan long-term goals. (Demo placeholder)</p>
+      </div>
+
+      <div style="margin-top:16px;" class="card">
+        <h4>KPIs Overview</h4>
+        <canvas id="strategyKPIChart" style="height:220px"></canvas>
+      </div>
+
+      <div style="margin-top:16px;" class="card">
+        <h4>Notes & Planning</h4>
+        <ul>
+          <li>Set quarterly objectives</li>
+          <li>Prioritize critical tasks</li>
+          <li>Allocate resources efficiently</li>
+          <li>Track team progress</li>
+        </ul>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h4>Quick Actions</h4>
+        <button class="btn" onclick="location.href='insights.html'">📊 View Insights</button>
+        <button class="btn" style="margin-top:10px;" onclick="location.href='system-health.html'">💡 Check System Health</button>
+        <button class="btn" style="margin-top:10px;" onclick="refreshStrategy()">🔄 Refresh</button>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h4>Strategy Summary</h4>
+        <p class="small">Plan objectives, review KPIs, and align team priorities for optimal outcomes.</p>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // === Unified Theme Handler ===
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        const saved = localStorage.getItem('auric_theme');
+        if (saved === 'dark') document.body.classList.add('dark');
+      } catch(e){}
+
+      window.toggleTheme = function(){
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        localStorage.setItem('auric_theme', isDark ? 'dark' : 'light');
+        document.body.style.transition =
+          'background-color var(--transition-dur) ease, color var(--transition-dur) ease';
+        setTimeout(() => document.body.style.transition = '', 400);
+      }
+    });
+
+    // Demo chart for KPIs
+    document.addEventListener('DOMContentLoaded', function(){
+      const ctx = document.getElementById('strategyKPIChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+          datasets: [{
+            label: 'Planned Tasks',
+            data: [12, 19, 14, 23],
+            backgroundColor: '#ffb347',
+            borderRadius: 6
+          },{
+            label: 'Completed Tasks',
+            data: [9, 15, 12, 20],
+            backgroundColor: '#ffda47',
+            borderRadius: 6
+          }]
+        },
+        options: { responsive:true, plugins:{legend:{position:'top'}} }
+      });
+    });
+
+    function refreshStrategy(){
+      location.reload();
+    }
+  </script>
+</body>
+</html>

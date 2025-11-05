@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Auric — Editor (Quill 2 + Pen Undo/Eraser)</title>
+
+<!-- ✅ Quill -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
+<style>
+/* === BASE LAYOUT === */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #e8ddbd; /* warm beige paper tone */
+  color: #222;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+.page {
+  position: relative;
+  width: 210mm; height: 297mm;
+  margin: 20px auto;
+  border: none;
+  background: #f9f6e8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.editorWrap { position: relative; width: 100%; height: 100%; }
+.editor {
+  height: calc(297mm - 40px);
+  padding: 16px;
+  overflow-y: auto;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.penCanvas {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* === HEADER === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff3cd;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.nav button {
+  margin-left: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* === FLOATING TOOLBAR === */
+#toolbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffc107; /* yellow toolbar */
+  border-radius: 40px;
+  padding: 10px 22px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 999;
+}
+
+#toolbar button,
+#toolbar select,
+#toolbar input {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: #000;
+  font-size: 18px;
+  transition: transform 0.15s ease;
+}
+#toolbar button:hover { transform: scale(1.1); }
+
+#toolbar label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px;
+}
+
+/* === ACTIVE TOGGLE === */
+#toolbar button.active {
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+/* === DARK MODE === */
+body.dark {
+  background: #0c1225; /* navy background */
+  color: #eee;
+}
+body.dark .header {
+  background: #1b274a;
+  color: #fff;
+}
+body.dark .page {
+  background: #101a33;
+  box-shadow: 0 0 10px rgba(255,255,255,0.05);
+}
+body.dark #toolbar {
+  background: #243b7a; /* deep blue toolbar */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+body.dark #toolbar button,
+body.dark #toolbar select,
+body.dark #toolbar input {
+  color: #fff;
+}
+
+/* === QUILL STYLING === */
+.ql-toolbar.ql-snow {
+  display: none; /* hide Quill's default toolbar */
+}
+.ql-container.ql-snow {
+  border: none !important;
+  background: transparent;
+}
+.ql-editor {
+  color: inherit;
+  background: transparent;
+}
+  /* === Wrapping & resizing visuals === */
+.ql-editor img {
+  transition: transform 0.1s ease, width 0.1s ease;
+  border-radius: 4px;
+}
+
+.imgWrapper:hover span:last-child {
+  opacity: 1;
+}
+
+.imgWrapper span:last-child {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+/* FORCE Quill toolbar icons/text to white in dark mode */
+body.dark #toolbar .ql-picker-label,
+body.dark #toolbar .ql-picker-item,
+body.dark #toolbar button,
+body.dark #toolbar button svg,
+body.dark #toolbar button svg path,
+body.dark #toolbar button svg rect,
+body.dark #toolbar button .ql-fill,
+body.dark #toolbar button .ql-stroke,
+body.dark .ql-picker-options,
+body.dark .ql-picker {
+  color: #fff !important;
+  fill: rgba(5, 5, 5, 0) !important;
+  stroke: #0f0e0e !important;
+}
+
+
+/* If you hide Quill's original toolbar, include this selector too */
+body.dark .ql-toolbar.ql-snow button,
+body.dark .ql-toolbar.ql-snow button svg,
+body.dark .ql-toolbar.ql-snow button svg path {
+  color: #fff !important;
+  fill: #fff !important;
+  stroke: #fff !important;
+}
+/* === Make Quill dropdowns open upward === */
+#toolbar .ql-picker-options {
+  top: auto !important;          /* disable default top positioning */
+  bottom: 100% !important;       /* make it appear above the button */
+  margin-bottom: 6px !important; /* small space between button & menu */
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.2); /* subtle reverse shadow */
+  border-radius: 6px 6px 0 0;    /* match rounded top edges */
+}
+
+/* Optional: for dark mode dropdown contrast */
+body.dark #toolbar .ql-picker-options {
+  background: #1b274a !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
+</style>
+
+</head>
+<body>
+<div class="header">
+  <div><strong>Auric</strong> — Editor</div>
+  <div class="nav">
+    <button onclick="location.href='index.html'">Home</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="toggleTheme()">Toggle Theme</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- ✅ Quill toolbar -->
+  <div id="toolbar">
+    <select class="ql-font"></select>
+    <select class="ql-size"></select>
+    <button class="ql-bold"></button>
+    <button class="ql-italic"></button>
+    <button class="ql-underline"></button>
+    <button class="ql-strike"></button>
+    <select class="ql-color"></select>
+    <button class="ql-image"></button>
+    <button class="ql-link"></button>
+    <button id="penToggle">✏️</button>
+    <button id="eraserToggle">🩹</button>
+    <button id="undoPen">↩</button>
+    <button id="redoPen">↪</button>
+    <label>Color <input type="color" id="penColor" value="#000000"></label>
+    <label>Width <input type="range" id="penWidth" min="1" max="20" value="2"></label>
+    <button onclick="saveNote()">💾</button>
+    <button onclick="shareNote()">🌐</button>
+    <span style="margin-left:auto">User: <span id="userName"></span></span>
+  </div>
+
+  <div id="pagesContainer"></div>
+</div>
+
+<!-- ✅ Quill -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<script>
+let penEnabled = false, eraserEnabled = false;
+let penColor = '#000', penWidth = 2;
+let drawing = false, activeCtx = null;
+let pagesContainer = null;
+let undoStack = [], redoStack = [];
+
+/* === Auth === */
+function requireAuth() {
+  return JSON.parse(localStorage.getItem('auric_current') || '{}') || {name:'Guest'};
+}
+
+/* === Init === */
+function initEditor() {
+  const cur = requireAuth();
+  document.getElementById('userName').textContent = cur.name || 'Guest';
+  pagesContainer = document.getElementById('pagesContainer');
+  addNewPage();
+
+  document.getElementById('penToggle').onclick = togglePen;
+  document.getElementById('eraserToggle').onclick = toggleEraser;
+  document.getElementById('undoPen').onclick = undoPen;
+  document.getElementById('redoPen').onclick = redoPen;
+  document.getElementById('penColor').onchange = e => penColor = e.target.value;
+  document.getElementById('penWidth').onchange = e => penWidth = +e.target.value;
+  applyTheme();
+}
+
+/* === Add new page === */
+function addNewPage() {
+  const page = document.createElement('div');
+  page.className = 'page';
+  const wrap = document.createElement('div');
+  wrap.className = 'editorWrap';
+  page.appendChild(wrap);
+
+  const editorDiv = document.createElement('div');
+  editorDiv.className = 'editor';
+  wrap.appendChild(editorDiv);
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'penCanvas';
+  wrap.appendChild(canvas);
+  pagesContainer.appendChild(page);
+
+  const quill = new Quill(editorDiv, {
+    theme: 'snow',
+    modules: { toolbar: '#toolbar' }
+  });
+
+  quill.on('text-change', () => {
+    if (editorDiv.scrollHeight > editorDiv.clientHeight) {
+      addNewPage().querySelector('.ql-editor').focus();
+    }
+  });
+quill.on('text-change', () => {
+  if (editorDiv.scrollHeight > editorDiv.clientHeight) {
+    addNewPage().querySelector('.ql-editor').focus();
+  }
+  makeImagesDraggable(); // <-- add this
+});
+
+  setupCanvas(canvas);
+  resizeCanvas(canvas);
+  return page;
+}
+
+/* === Canvas Drawing + Undo === */
+function setupCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  canvas.addEventListener('mousedown', e => {
+    if (!penEnabled) return;
+    drawing = true;
+    activeCtx = ctx;
+    saveState(canvas); // save before each new stroke
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+
+    // ✅ make sure stroke mode is correct from start
+    if (eraserEnabled) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = penColor;
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (!drawing || !activeCtx) return;
+    const rect = canvas.getBoundingClientRect();
+
+    if (eraserEnabled) {
+      activeCtx.globalCompositeOperation = 'destination-out'; // true erase
+      activeCtx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      activeCtx.globalCompositeOperation = 'source-over';
+      activeCtx.strokeStyle = penColor;
+    }
+
+    activeCtx.lineWidth = penWidth;
+    activeCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    activeCtx.stroke();
+  });
+
+  window.addEventListener('mouseup', () => {
+    drawing = false;
+    activeCtx = null;
+  });
+}
+
+
+/* === Undo / Redo === */
+function saveState(canvas) {
+  undoStack.push(canvas.toDataURL());
+  if (undoStack.length > 50) undoStack.shift(); // optional memory limit
+  redoStack = [];
+}
+
+function undoPen() {
+  const canvas = document.querySelector('.penCanvas');
+  if (undoStack.length < 2) return; // nothing to undo
+  redoStack.push(undoStack.pop());
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = undoStack[undoStack.length - 1];
+}
+
+function redoPen() {
+  const canvas = document.querySelector('.penCanvas');
+  if (!redoStack.length) return;
+  const ctx = canvas.getContext('2d');
+  const redoImg = redoStack.pop();
+  undoStack.push(redoImg);
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = redoImg;
+}
+
+/* === Pen / Eraser toggles === */
+function togglePen() {
+  penEnabled = !penEnabled;
+  if (penEnabled) eraserEnabled = false;
+  updateTools();
+}
+function toggleEraser() {
+  eraserEnabled = !eraserEnabled;
+  if (eraserEnabled) penEnabled = true;
+  updateTools();
+}
+function updateTools() {
+  document.getElementById('penToggle').classList.toggle('active', penEnabled && !eraserEnabled);
+  document.getElementById('eraserToggle').classList.toggle('active', eraserEnabled);
+  document.querySelectorAll('.penCanvas').forEach(c=>{
+    c.style.pointerEvents = penEnabled ? 'auto':'none';
+  });
+}
+
+/* === Save / Share === */
+function saveNote() {
+  const pages = document.querySelectorAll('.page');
+  const data = [];
+  pages.forEach(page => {
+    const html = page.querySelector('.ql-editor').innerHTML;
+    const canvas = page.querySelector('.penCanvas').toDataURL();
+    data.push({content: html, canvas});
+  });
+  const notes = JSON.parse(localStorage.getItem('auric_notes') || '[]');
+  notes.unshift({pages: data, owner: requireAuth(), created: Date.now()});
+  localStorage.setItem('auric_notes', JSON.stringify(notes));
+  alert('Saved to local notes.');
+}
+function shareNote() {
+  saveNote();
+  const notes = JSON.parse(localStorage.getItem('auric_notes') || '[]');
+  if (notes.length) notes[0].shared = true;
+  localStorage.setItem('auric_notes', JSON.stringify(notes));
+  alert('Shared to community.');
+}
+
+/* === Theme === */
+function toggleTheme() {
+  const dark = document.body.classList.toggle('dark');
+  localStorage.setItem('auric_theme', dark ? 'dark' : 'light');
+  applyTheme();
+}
+function applyTheme() {
+  const dark = localStorage.getItem('auric_theme') === 'dark';
+  document.body.classList.toggle('dark', dark);
+}
+
+window.addEventListener('DOMContentLoaded', initEditor);
+  /* === Make Quill images draggable === */
+function makeImagesDraggable() {
+  document.querySelectorAll('.ql-editor img').forEach(img => {
+    // ensure consistent layout and wrapping
+    img.style.display = 'inline-block';
+    img.style.maxWidth = '60%';
+    img.style.height = 'auto';
+    img.style.margin = '4px 12px';
+    img.style.float = 'left'; // text wraps to right
+    img.style.cursor = 'move';
+    img.style.position = 'relative';
+    img.draggable = false;
+
+    // === Dragging (horizontal only, limited movement to prevent chaos)
+    let isDragging = false, startX, origX;
+    img.addEventListener('mousedown', e => {
+      if (penEnabled) return;
+      if (e.target.dataset.resizing === 'true') return;
+      e.preventDefault();
+      isDragging = true;
+      startX = e.clientX;
+      origX = parseFloat(img.dataset.x || 0);
+      document.body.style.userSelect = 'none';
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const x = origX + dx;
+      img.style.transform = `translateX(${x}px)`;
+      img.dataset.x = x;
+    });
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    });
+
+    // === Add resize handle (bottom-right corner)
+    if (!img.parentElement.classList.contains('imgWrapper')) {
+      const wrapper = document.createElement('span');
+      wrapper.className = 'imgWrapper';
+      wrapper.style.display = 'inline-block';
+      wrapper.style.position = 'relative';
+      wrapper.style.float = img.style.float;
+      wrapper.style.margin = img.style.margin;
+      img.parentNode.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+
+      const handle = document.createElement('span');
+      handle.style.position = 'absolute';
+      handle.style.right = '0';
+      handle.style.bottom = '0';
+      handle.style.width = '12px';
+      handle.style.height = '12px';
+      handle.style.background = 'rgba(0,0,0,0.4)';
+      handle.style.cursor = 'nwse-resize';
+      handle.style.borderRadius = '2px';
+      wrapper.appendChild(handle);
+
+      // === Handle resizing
+      let resizing = false, startWidth, startMouseX;
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault();
+        resizing = true;
+        img.dataset.resizing = 'true';
+        startWidth = img.clientWidth;
+        startMouseX = e.clientX;
+      });
+      window.addEventListener('mousemove', e => {
+        if (!resizing) return;
+        const newWidth = startWidth + (e.clientX - startMouseX);
+        img.style.width = newWidth + 'px';
+        img.style.maxWidth = '100%';
+      });
+      window.addEventListener('mouseup', () => {
+        if (resizing) {
+          resizing = false;
+          img.dataset.resizing = 'false';
+        }
+      });
+    }
+  });
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Auric — Profile</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .profile-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin: 40px 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .card h3 {
+      margin-bottom: 16px;
+      color: var(--accent-color);
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: var(--text-color);
+      transition: background 0.3s ease, border 0.3s ease;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+    }
+
+    .option {
+      margin-bottom: 10px;
+    }
+
+    .info {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    /* Light/Dark shared color variables */
+    :root {
+      --card-bg: #f9f6e8;
+      --text-color: #222;
+      --border-color: #ccc;
+      --input-bg: #fff;
+      --accent-color: #c58d00;
+      --shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    body.dark {
+      --card-bg: #101a33;
+      --text-color: #eee;
+      --border-color: #445;
+      --input-bg: #1b274a;
+      --accent-color: #ffca28;
+      --shadow: 0 2px 8px rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div><strong>Auric</strong> — Profile</div>
+    <div class="nav">
+      <button class="link" onclick="location.href='index.html'">Home</button>
+      <button class="link" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container profile-container">
+    <div class="card">
+      <h3>Profile Settings</h3>
+      <form onsubmit="saveProfile(event)">
+        <label for="name">Display Name</label>
+        <input id="name" type="text" placeholder="Enter your name">
+
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="your@email.com">
+
+        <label for="password">Change Password</label>
+        <input id="password" type="password" placeholder="••••••••">
+
+        <button class="btn" type="submit">Save Changes</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Preferences</h3>
+      <div class="option">
+        <input type="checkbox" id="notif" onchange="toggleNotif(this)">
+        <label for="notif">Enable Task Notifications</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="autosave" onchange="toggleAutosave(this)">
+        <label for="autosave">Auto-save new tasks</label>
+      </div>
+      <button class="btn" onclick="clearData()">Clear Local Data</button>
+      <p class="info" style="margin-top:12px;">
+        These settings only affect your device. Clearing data removes all locally saved tasks and preferences.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      applySavedTheme();
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      document.getElementById("name").value = user.name || "";
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("notif").checked = localStorage.getItem("auric_notif") === "true";
+      document.getElementById("autosave").checked = localStorage.getItem("auric_autosave") === "true";
+    });
+
+    function saveProfile(e) {
+      e.preventDefault();
+      const user = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+      };
+      localStorage.setItem("user", JSON.stringify(user));
+      alert("Profile updated successfully!");
+    }
+
+    function toggleNotif(chk) {
+      localStorage.setItem("auric_notif", chk.checked);
+    }
+
+    function toggleAutosave(chk) {
+      localStorage.setItem("auric_autosave", chk.checked);
+    }
+
+    function clearData() {
+      if (confirm("This will clear all local data, including tasks and preferences. Continue?")) {
+        localStorage.clear();
+        alert("All data cleared.");
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

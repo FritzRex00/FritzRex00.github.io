@@ -1,0 +1,240 @@
+ <!doctype html>
+<html><head><meta charset="utf-8"><title>Auric — Home</title>
+<link rel="stylesheet" href="css/style.css">
+  <style>
+/* === MATCH EDITOR THEME === */
+body {
+  background: #e8ddbd;
+  color: #222;
+  font-family: sans-serif;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff3cd;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.nav button {
+  margin-left: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+  color: inherit;
+}
+
+.link, .btn {
+  background: #ffc107;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-weight: bold;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.link:hover, .btn:hover {
+  background: #ffda47;
+}
+
+.container.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: #f9f6e8;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* === FORCE DARK THEME TO SHOW === */
+body.dark, body.dark .header, body.dark .card, body.dark .btn, body.dark .link {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+body.dark {
+  background: #0c1225 !important;
+  color: #eee !important;
+}
+body.dark .header {
+  background: #1b274a !important;
+  color: #fff !important;
+}
+body.dark .card {
+  background: #101a33 !important;
+  box-shadow: 0 0 10px rgba(255,255,255,0.05) !important;
+}
+body.dark .btn, body.dark .link {
+  background: #243b7a !important;
+  color: #fff !important;
+}
+body.dark .btn:hover, body.dark .link:hover {
+  background: #3854a3 !important;
+}
+    /* Smooth theme transition (one copy only) */
+:root { --transition-dur: 360ms; }
+body, .header, .card, .btn, .link {
+  transition: background-color var(--transition-dur) ease, color var(--transition-dur) ease, box-shadow var(--transition-dur) ease;
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+</head><body>
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Simple manual check for login
+  const cur = JSON.parse(localStorage.getItem('auric_current') || 'null');
+
+  if (!cur) {
+    console.warn("No session found — redirecting to login");
+    window.location.href = 'login.html';
+    return;
+  }
+
+  console.log(`Logged in as: ${cur.username} (${cur.role})`);
+  document.body.classList.add("logged-in");
+});
+</script>
+
+<div class="header"><div><strong>Auric</strong> — Home</div>
+  <div class="nav">
+    <button class="link" onclick="location.href='editor.html'">Editor</button>
+    <button class="link" onclick="location.href='tasks.html'">Tasks</button>
+    <button class="link" onclick="location.href='profile.html'">Profile</button>
+    <button class="link" onclick="logout()">Logout</button>
+    <button class="btn" onclick="toggleTheme()">Toggle Theme</button>
+  </div>
+</div>
+<div class="container grid">
+  <div>
+    <div class="card">
+      <h3>Welcome to Auric</h3>
+      <p class="small">A demo app with notes, pen tool, tasks, and executive dashboards. Use demo accounts or create one.</p>
+      <div style="margin-top:12px">
+        <button class="btn" onclick="location.href='editor.html'">Open Editor</button>
+      </div>
+    </div>
+    <div style="margin-top:12px" class="card">
+      <h4>Community Shared Notes</h4>
+      <div id="sharedList"></div>
+      <script>document.addEventListener('DOMContentLoaded', function(){ if(typeof loadShared==='function') loadShared(); });</script>
+    </div>
+  </div>
+  <aside>
+    <div class="card">
+      <h4>Quick Stats</h4>
+      <p>Tasks: <span id="statTasks">0</span></p>
+      <canvas id="miniChart" style="width:100%;height:120px"></canvas>
+    </div>
+    <div style="margin-top:12px" class="card">
+      <h4>Recent Activity</h4>
+      <div id="recentActivity" class="small"></div>
+    </div>
+  </aside>
+</div>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Wait for everything to load
+  const cur = JSON.parse(localStorage.getItem('auric_current') || 'null');
+
+  if (!cur) {
+    console.warn("No session found — redirecting to login");
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // ✅ Confirm user info in console
+  console.log(`Logged in as ${cur.username} (${cur.role})`);
+  
+  // Show user info on screen (optional)
+  const userInfo = document.createElement('p');
+  userInfo.textContent = `Welcome, ${cur.name}!`;
+  document.body.prepend(userInfo);
+});
+  
+</script>
+<script>
+/* Single reliable theme manager — toggles body.dark (not html.dark) */
+/* Paste this ONCE at the very end of the page (right before </body>) */
+
+(function () {
+  // init after DOM parsed
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+    try {
+      // Apply saved theme to <body>
+      const saved = localStorage.getItem('auric_theme');
+      if (saved === 'dark') document.body.classList.add('dark');
+
+      // Mark ready so CSS transitions apply without flash
+      document.body.classList.add('theme-ready');
+    } catch (e) {
+      console.warn('theme init error', e);
+    }
+
+    // Attach toggler(s)
+    const inlineBtns = Array.from(document.querySelectorAll('button[onclick="toggleTheme()"]'));
+    const dataBtns = Array.from(document.querySelectorAll('button[data-theme-toggle]'));
+    const btns = Array.from(new Set([...inlineBtns, ...dataBtns]));
+
+    btns.forEach(btn => {
+      if (btn.__themeBound) return;
+      btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        doToggle();
+      });
+      btn.__themeBound = true;
+    });
+
+    // expose global function for compatibility with inline onclick
+    window.toggleTheme = doToggle;
+  }
+
+  function doToggle() {
+    try {
+     const html = document.documentElement;
+const isDark = html.getAttribute('data-theme') === 'dark';
+html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+localStorage.setItem('auric_theme', isDark ? 'light' : 'dark');
+
+      localStorage.setItem('auric_theme', isDark ? 'dark' : 'light');
+
+      // temporary transition on <body> for a smooth crossfade
+      document.body.style.transition = 'background-color var(--transition-dur) ease, color var(--transition-dur) ease';
+      setTimeout(() => {
+        document.body.style.transition = '';
+      }, 400);
+    } catch (e) {
+      console.warn('toggleTheme error', e);
+      
+    }
+     setTimeout(() => location.reload(), 150);
+  }
+})();
+</script>
+
+
+</body>
+</html>
