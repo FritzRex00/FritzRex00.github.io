@@ -1,0 +1,1 @@
+# FritzRex00.github.io
