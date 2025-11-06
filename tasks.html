@@ -1,0 +1,305 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Auric — Tasks</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Apply saved theme immediately (pre-paint) to avoid flash / stuck light -->
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('auric_theme') || 'auto';
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const mode = saved === 'auto' ? (prefersDark ? 'dark' : 'light') : saved;
+        // set both html data-theme and body class for compatibility
+        document.documentElement.setAttribute('data-theme', mode);
+        document.body && (mode === 'dark' ? document.body.classList.add('dark') : document.body.classList.remove('dark'));
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+
+  <style>
+/* === AURIC VISUAL BASE === */
+body {
+  background: #e8ddbd;
+  color: #222;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* === HEADER === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff3cd;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.header strong {
+  font-size: 1.3em;
+  letter-spacing: 0.5px;
+}
+.nav button {
+  margin-left: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+  color: inherit;
+}
+
+/* === BUTTONS === */
+.link, .btn {
+  background: #ffc107;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-weight: bold;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.link:hover, .btn:hover {
+  background: #ffda47;
+  transform: translateY(-1px);
+}
+
+/* === LAYOUT === */
+.container.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+.card {
+  background: #f9f6e8;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* === TABLES === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+th, td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+th {
+  text-align: left;
+  background: #fff7d6;
+}
+tr:hover {
+  background: rgba(255, 193, 7, 0.1);
+}
+
+/* === CALENDAR === */
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+.calendar-day {
+  background: #fffdf5;
+  border-radius: 10px;
+  padding: 18px 10px; /* bigger cells */
+  min-height: 90px;    /* bigger cells */
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.12s ease, background 0.18s ease;
+}
+.calendar-day .day-number {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.calendar-day:hover {
+  background: #fff2c2;
+  transform: translateY(-4px);
+}
+.calendar-day.today {
+  background: #ffe57f;
+  font-weight: bold;
+  border: 2px solid #ffca28;
+}
+.calendar-day.has-task::after {
+  content: '•';
+  color: #d17d00;
+  display: block;
+  font-size: 1.2em;
+  margin-top: auto;
+  align-self:center;
+}
+
+/* === DARK THEME (kept for compatibility with body.dark) === */
+body.dark,
+html[data-theme="dark"] body {
+  background: #0c1225 !important;
+  color: #eee !important;
+}
+body.dark .header,
+html[data-theme="dark"] .header {
+  background: #1b274a !important;
+  color: #fff !important;
+}
+body.dark .card,
+html[data-theme="dark"] .card {
+  background: #101a33 !important;
+  box-shadow: 0 0 10px rgba(255,255,255,0.05) !important;
+}
+body.dark .btn, body.dark .link,
+html[data-theme="dark"] .btn, html[data-theme="dark"] .link {
+  background: #243b7a !important;
+  color: #fff !important;
+}
+body.dark .btn:hover, body.dark .link:hover,
+html[data-theme="dark"] .btn:hover, html[data-theme="dark"] .link:hover {
+  background: #3854a3 !important;
+}
+body.dark th, html[data-theme="dark"] th {
+  background: #18254d !important;
+}
+body.dark tr:hover, html[data-theme="dark"] tr:hover {
+  background: rgba(56, 84, 163, 0.15);
+}
+body.dark .calendar-day,
+html[data-theme="dark"] .calendar-day {
+  background: #192542;
+  color: #eee;
+}
+body.dark .calendar-day.today,
+html[data-theme="dark"] .calendar-day.today {
+  background: #324f9e;
+  border-color: #5679d1;
+}
+body.dark .calendar-day.has-task::after,
+html[data-theme="dark"] .calendar-day.has-task::after {
+  color: #ffca28;
+}
+
+/* Smooth transition */
+:root { --transition-dur: 360ms; }
+body, .header, .card, .btn, .link {
+  transition: background-color var(--transition-dur) ease,
+              color var(--transition-dur) ease,
+              box-shadow var(--transition-dur) ease;
+}
+  </style>
+
+  <!-- load scripts after we set initial theme (deferred) -->
+  <script src="js/main.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/tasks.js" defer></script>
+</head>
+<body>
+<div class="header">
+  <div><strong>Auric</strong> — Tasks</div>
+  <div class="nav">
+    <button class="link" onclick="location.href='index.html'">Home</button>
+  </div>
+</div>
+
+<div class="container grid">
+  <div>
+    <div class="card">
+      <h3>Tasks</h3>
+      <form onsubmit="addTask(event)">
+        <label>Title<input id="task_title"></label><br><br>
+        <label>Date<input id="task_date" type="date"></label><br><br>
+        <button class="btn" type="submit">Add Task</button>
+      </form>
+      <table style="margin-top:12px;">
+        <thead>
+          <tr><th>Task</th><th>Date</th><th>Status</th><th>Delete</th></tr>
+        </thead>
+        <tbody id="taskList"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <button class="btn" onclick="changeMonth(-1)">◀ Prev</button>
+        <h3 id="calendarTitle">Calendar View</h3>
+        <button class="btn" onclick="changeMonth(1)">Next ▶</button>
+      </div>
+      <div id="calendar" style="margin-top:10px;"></div>
+      <div id="calendarTasks" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <h4>My Profile</h4>
+      <p id="profileMini">loading...</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const cur = JSON.parse(localStorage.getItem('auric_current')||'null');
+  document.getElementById('profileMini').textContent = cur ? (cur.name+' ('+cur.role+')') : 'Not logged';
+});
+</script>
+
+<!-- Robust theme manager (exposes toggleTheme, supports 'auto'|'dark'|'light') -->
+<script>
+(function () {
+  const KEY = 'auric_theme';
+
+  function getSaved() {
+    try { return localStorage.getItem(KEY) || 'auto'; } catch (e) { return 'auto'; }
+  }
+  function apply(theme) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const mode = theme === 'auto' ? (prefersDark ? 'dark' : 'light') : theme;
+    document.documentElement.setAttribute('data-theme', mode);
+    if (document.body) {
+      document.body.classList.toggle('dark', mode === 'dark');
+    }
+  }
+
+  // apply immediately (in case this script runs after head inline)
+  apply(getSaved());
+
+  // expose global helpers
+  window.toggleTheme = function toggleTheme() {
+    const current = getSaved();
+    let next;
+    if (current === 'auto') {
+      // flip based on current computed mode
+      const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      next = now === 'dark' ? 'light' : 'dark';
+    } else {
+      next = current === 'dark' ? 'light' : 'dark';
+    }
+    localStorage.setItem(KEY, next);
+    apply(next);
+  };
+
+  window.setTheme = function setTheme(v) {
+    localStorage.setItem(KEY, v);
+    apply(v);
+  };
+
+  // If user keeps 'auto', update theme on OS changes
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (getSaved() === 'auto') apply('auto');
+    });
+  }
+})();
+</script>
+</body>
+</html>

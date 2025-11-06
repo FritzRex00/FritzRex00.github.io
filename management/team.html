@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Auric — Team</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/main.js"></script>
+  <script src="../js/auth.js"></script>
+
+  <style>
+    /* === AURIC BASE === */
+    body {
+      background: #e8ddbd;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #222;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* === HEADER === */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: #fff3cd;
+      color: #222;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .header strong {
+      font-size: 1.3em;
+      letter-spacing: 0.5px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav button.link {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 10px;
+      transition: color 0.2s ease;
+    }
+
+    .nav button.link:hover {
+      color: #555;
+      text-decoration: underline;
+    }
+
+    /* === CARD CONTAINER === */
+    .container.card {
+      background: #f9f6e8;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin: 50px auto;
+      padding: 30px 36px;
+      max-width: 700px;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .container.card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .container.card h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.4em;
+      color: #222;
+    }
+
+    /* === TABLE === */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    th {
+      background: #ffecb3;
+      color: #333;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.9em;
+      letter-spacing: 0.4px;
+    }
+
+    tr:hover td {
+      background: rgba(255, 234, 125, 0.25);
+      transition: background 0.2s ease;
+    }
+
+    /* === DARK THEME === */
+    body.dark {
+      background: #0d1329 !important;
+      color: #f5f7ff !important;
+    }
+
+    body.dark .header {
+      background: #1c2952 !important;
+      color: #f9f9ff !important;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.4);
+    }
+
+    body.dark .container.card {
+      background: #111a33 !important;
+      color: #f4f6ff !important;
+      box-shadow: 0 0 16px rgba(255,255,255,0.05) !important;
+    }
+
+    body.dark .container.card h3 {
+      color: #ffda47 !important;
+    }
+
+    body.dark table {
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    body.dark th {
+      background: #24335c !important;
+      color: #ffda47 !important;
+    }
+
+    body.dark tr:hover td {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark td {
+      color: #e5e8ff;
+    }
+
+    :root { --transition-dur: 360ms; }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div><strong>Auric</strong> — Team</div>
+    <div class="nav">
+      <button class="link" onclick="location.href='dashboard.html'">Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container card">
+    <h3>Team Members</h3>
+    <table id="teamTbl">
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Tasks</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const cur = requireAuth(['manager']);
+    if(!cur) return;
+    const users = JSON.parse(localStorage.getItem('auric_users')||'[]');
+    const tbody = document.querySelector('#teamTbl tbody');
+    users.forEach(u=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+u.name+'</td><td>'+u.role+'</td><td>—</td>';
+      tbody.appendChild(tr);
+    });
+
+    // === Unified Theme Manager ===
+    try {
+      const saved = localStorage.getItem('auric_theme');
+      if (saved === 'dark') document.body.classList.add('dark');
+    } catch(e){}
+
+    window.toggleTheme = function(){
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('auric_theme', isDark ? 'dark' : 'light');
+      document.body.style.transition =
+        'background-color var(--transition-dur) ease, color var(--transition-dur) ease';
+      setTimeout(() => document.body.style.transition = '', 400);
+    }
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Auric — System Health</title>
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    body {
+      background: #e8ddbd;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #222;
+      margin: 0;
+      min-height: 100vh;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: #fff3cd;
+      color: #222;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .header strong { font-size: 1.3em; }
+
+    .nav { display: flex; gap: 8px; }
+
+    .nav button.link {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 10px;
+      transition: color 0.2s ease;
+    }
+    .nav button.link:hover { color: #555; text-decoration: underline; }
+
+    /* GRID & CARDS */
+    .container.grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 40px;
+    }
+
+    .card {
+      background: #f9f6e8;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+
+    .card h3, .card h4 { margin-top: 0; color: #222; }
+
+    /* PROGRESS BAR */
+    .progress {
+      background: #ddd;
+      border-radius: 10px;
+      height: 20px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(135deg, #ffda47, #ffb347);
+      border-radius: 10px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background: linear-gradient(135deg, #ffda47, #ffb347);
+      border: none;
+      color: #222;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+
+    /* DARK THEME */
+    body.dark {
+      background: #0d1329 !important;
+      color: #f5f7ff !important;
+    }
+    body.dark .header { background: #1c2952 !important; color: #f9f9ff !important; }
+    body.dark .card { background: #111a33 !important; color: #f4f6ff !important; box-shadow: 0 0 16px rgba(255,255,255,0.05) !important; }
+    body.dark .card h3, body.dark .card h4 { color: #ffda47 !important; }
+    body.dark .progress { background: #22335c; }
+    body.dark .progress i { background: linear-gradient(135deg, #ffda47, #ffc857); }
+
+    :root { --transition-dur: 360ms; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div><strong>Auric</strong> — System Health</div>
+  <div class="nav">
+
+  </div>
+</div>
+
+<div class="container grid">
+  <div>
+    <div class="card">
+      <h3>System Health Overview</h3>
+      <p>Uptime: <strong id="uptime">99.98%</strong></p>
+      <div class="progress"><i style="width:99.98%"></i></div>
+      <p style="margin-top:12px;">Avg Response Time: <strong id="avgResp">120ms</strong></p>
+    </div>
+
+    <div style="margin-top:16px;" class="card">
+      <h4>Server Metrics</h4>
+      <ul>
+        <li>CPU Usage: 45%</li>
+        <li>Memory Usage: 68%</li>
+        <li>Disk Space: 82% used</li>
+        <li>Network Latency: 120ms</li>
+      </ul>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <h4>Quick Actions</h4>
+      <button class="btn" onclick="refreshHealth()">🔄 Refresh Data</button>
+      <button class="btn" style="margin-top:10px;" onclick="location.href='strategy.html'">📊 View Strategy</button>
+      <button class="btn" style="margin-top:10px;" onclick="location.href='insights.html'">💡 View Insights</button>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h4>System Summary</h4>
+      <p class="small">Monitor uptime, response time, and critical metrics. Take quick actions to maintain optimal system performance.</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+  // === Theme Handler ===
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      const saved = localStorage.getItem('auric_theme');
+      if(saved==='dark') document.body.classList.add('dark');
+    } catch(e){}
+
+    window.toggleTheme = function(){
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('auric_theme', isDark?'dark':'light');
+    }
+  });
+
+  // Demo refresh function
+  function refreshHealth(){
+    location.reload();
+  }
+</script>
+</body>
+</html>

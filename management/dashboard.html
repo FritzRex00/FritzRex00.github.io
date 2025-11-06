@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Auric — Management Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <style>
+    /* === DASHBOARD LAYOUT === */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card h3, .card h4 {
+      margin-bottom: 14px;
+      color: var(--accent-color);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      font-size: 1.1rem;
+    }
+
+    .stats div {
+      background: var(--stat-bg);
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-align: center;
+      flex: 1;
+      margin: 0 6px;
+      transition: transform 0.2s ease;
+    }
+
+    .stats div:hover {
+      transform: translateY(-3px);
+    }
+
+    #recentNotes {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .note-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      border-left: 4px solid var(--accent-color);
+      font-size: 0.95rem;
+    }
+
+    aside .card {
+      position: sticky;
+      top: 20px;
+    }
+
+    /* === LIGHT / DARK THEMES === */
+    :root {
+      --card-bg: #f9f6e8;
+      --text-color: #222;
+      --accent-color: #c58d00;
+      --shadow: 0 2px 6px rgba(0,0,0,0.1);
+      --input-bg: #fff;
+      --stat-bg: #fff3cd;
+    }
+
+    body.dark {
+      --card-bg: #101a33;
+      --text-color: #eee;
+      --accent-color: #ffca28;
+      --shadow: 0 2px 8px rgba(255,255,255,0.05);
+      --input-bg: #1b274a;
+      --stat-bg: #18254d;
+    }
+    .action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.modern-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--text-on-accent);
+  border: none;
+  padding: 0.85em 1.1em;
+  font-size: 0.95em;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.modern-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1);
+}
+
+.modern-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+  </style>
+</head>
+<body>
+  <script>
+    const cur = requireAuth(['manager']);
+  </script>
+
+  <div class="header">
+    <div><strong>Auric</strong> — Management</div>
+    <div class="nav">
+      <button class="link" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container dashboard-grid">
+    <div>
+      <div class="card">
+        <h3>Overview</h3>
+        <p>Welcome back, <strong id="userName"></strong> 👋</p>
+        <div class="stats">
+          <div>
+            <strong id="statUsers">0</strong><br>Users
+          </div>
+          <div>
+            <strong id="statTasks">0</strong><br>Tasks
+          </div>
+        </div>
+        <canvas id="tasksChart" height="220" style="margin-top:20px;"></canvas>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <h4>Recent Notes</h4>
+        <div id="recentNotes">
+          <div class="note-item">Loading notes...</div>
+        </div>
+      </div>
+    </div>
+
+   <aside>
+  <div class="card quick-actions">
+    <h4>Quick Actions</h4>
+    <div class="action-buttons">
+      <button class="modern-btn" onclick="location.href='reports.html'">📊 Generate Report</button>
+      <button class="modern-btn" onclick="location.href='team.html'">👥 Manage Team</button>
+      <button class="modern-btn" onclick="refreshDashboard()">🔄 Refresh</button>
+    </div>
+  </div>
+</aside>
+
+  </div>
+
+  <script>
+    // Theme consistency
+    document.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem("auric_theme");
+      if (saved === "dark") document.body.classList.add("dark");
+
+      const cur = JSON.parse(localStorage.getItem("auric_current") || "null");
+      if (cur) document.getElementById("userName").textContent = cur.name || "Manager";
+
+      // Chart init example
+      const ctx = document.getElementById("tasksChart");
+      if (ctx) {
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Completed", "Pending", "Overdue"],
+            datasets: [{
+              data: [30, 15, 5],
+              backgroundColor: ["#ffc107", "#ffda47", "#e0a800"],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            plugins: { legend: { display: true, position: "bottom" } }
+          }
+        });
+      }
+
+      // Example recent notes
+      const notesEl = document.getElementById("recentNotes");
+      notesEl.innerHTML = `
+        <div class="note-item">✔ Team meeting summary uploaded.</div>
+        <div class="note-item">⚠ Deadline for Q4 reports approaching.</div>
+        <div class="note-item">📦 Inventory check completed.</div>
+      `;
+    });
+
+    function refreshDashboard() {
+      location.reload();
+    }
+  </script>
+</body>
+</html>
